@@ -1,19 +1,21 @@
 import React from 'react';
-import { View, Text, Button, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to the Home Page</Text>
-      <Image
-        source={{ uri: 'https://placekitten.com/200/200' }}
-        style={styles.image}
-      />
-      <Button
-        title="Go to Next Page"
-        onPress={() => navigation.navigate('NextPage')}
-        color="#1e90ff"  // Button color
-      />
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('SignUp')}
+      >
+        <Text style={styles.buttonText}>Sign Up</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.button, styles.signInButton]} // Using two styles for SignIn button
+        onPress={() => navigation.navigate('SignIn')}
+      >
+        <Text style={styles.buttonText}>Sign In</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -24,14 +26,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#f5f5f5',  // Background color for the whole screen
   },
-  title: {
-    fontSize: 20,
-    marginBottom: 20,
+  button: {
+    backgroundColor: '#28a745',   // Green color for the Sign Up button
+    paddingVertical: 15,          // Padding inside the button (vertical)
+    paddingHorizontal: 40,        // Padding inside the button (horizontal)
+    borderRadius: 30,             // Rounded corners for the button
+    borderWidth: 2,               // Border width
+    borderColor: '#fff',          // White border color
+    marginVertical: 10,           // Space between the buttons
+    width: 200,                   // Fixed width for the buttons
+    alignItems: 'center',         // Center the text inside the button
   },
-  image: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
+  signInButton: {
+    backgroundColor: '#007bff',   // Blue color for the Sign In button
+  },
+  buttonText: {
+    color: '#fff',                // White text color
+    fontSize: 18,                 // Font size for the text
+    fontWeight: 'bold',           // Bold font weight
   },
 });
