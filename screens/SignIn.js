@@ -1,30 +1,31 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-
+import React, { useState } from "react";
+import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import { auth } from "../App";
+import { signInWithEmailAndPassword } from "firebase/auth";
 export default function SignInScreen({ navigation }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   const validateForm = () => {
     if (!username || !password) {
-      Alert.alert('Error', 'Please fill in both username and password.');
+      Alert.alert("Error", "Please fill in both username and password.");
       return false;
     }
     return true;
   };
 
-  const onSignIn = () => {
+  const onSignIn = async () => {
     if (!validateForm()) return;
 
-    // Log the user's input data to the console
-    console.log({
-      username,
-      password,
-    });
-
-    // Handle further sign-in logic here (e.g., API call)
-
-    Alert.alert('Success', 'Sign-In successful!');
+    await signInWithEmailAndPassword(auth, username, password)
+      .then((userCredential) => {
+        console.log("User signed in!");
+        // Redirect to Home Screen
+        navigation.navigate("Home");
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
 
   return (
@@ -44,6 +45,13 @@ export default function SignInScreen({ navigation }) {
         secureTextEntry
       />
       <Button title="Sign In" onPress={onSignIn} color="#007bff" />
+      <Button
+        title="Sign Up"
+        onPress={() => {
+          navigation.navigate("SignUp");
+        }}
+        color="#007bff"
+      />
     </View>
   );
 }
@@ -51,23 +59,23 @@ export default function SignInScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   title: {
     fontSize: 24,
     marginBottom: 20,
-    textAlign: 'center',
-    fontWeight: 'bold',
+    textAlign: "center",
+    fontWeight: "bold",
   },
   input: {
     height: 50,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
 });

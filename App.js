@@ -1,76 +1,61 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import HomeScreen from './screens/HomeScreen';
-import NextPage from './screens/NextPage';
-import ProfileScreen from './screens/ProfileScreen';
-import SignUpScreen from './screens/SignUp';
-import SignInScreen from './screens/SignIn';
-
+import React, { useEffect } from "react";
+import { initializeApp } from "firebase/app";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import SplashScreen from "./screens/SplashScreen";
+import HomeScreen from "./screens/HomeScreen";
+import SignUpScreen from "./screens/SignUp";
+import SignInScreen from "./screens/SignIn";
+import { initializeAuth, getReactNativePersistence } from "firebase/auth";
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 // Create Tab and Stack Navigators
-const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
+const firebaseConfig = {
+  apiKey: "AIzaSyBisKE9oJxmbWoE6qECpEZskCpmKoQ8C7A",
+  authDomain: "my-app-3ba50.firebaseapp.com",
+  projectId: "my-app-3ba50",
+  storageBucket: "my-app-3ba50.appspot.com",
+  messagingSenderId: "392800303698",
+  appId: "1:392800303698:web:38b53979ac2566eb693d8b",
+  measurementId: "G-PEX4GDQNPY",
+};
 
-// Stack navigator for , and HomeScreen
-function AuthStack() {
-  return (
-    <Stack.Navigator initialRouteName="Home">
-      {/* Home Screen where users choose SignIn or SignUp */}
-      <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="SignUp" component={SignUpScreen} />
-      <Stack.Screen name="SignIn" component={SignInScreen} />
-    </Stack.Navigator>
-  );
-}
+export const app = initializeApp(firebaseConfig);
+export const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+});
+const App = () => {
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        // If user is logged in, navigate to Home screen
+        navigation.navigate("Home");
+      } else {
+        // If user is not logged in, navigate to SignIn screen
+        navigation.navigate("SignIn");
+      }
+    });
 
-// Main Tab Navigator for the rest of the app
-function MainTabs() {
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home';
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'user' : 'user-o';
-          } else if (route.name === 'Search') {
-            iconName = 'search';
-          } else if (route.name === 'Settings') {
-            iconName = 'cog';
-          }
-          return <Icon name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: 'tomato',
-        tabBarInactiveTintColor: 'gray',
-        tabBarStyle: [{ display: 'flex' }, null],
-      })}
-    >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Search" component={HomeScreen} />
-      <Tab.Screen name="Settings" component={HomeScreen} />
-      <Tab.Screen
-        name="NextPage"
-        component={NextPage}
-        options={{ tabBarButton: () => null }} // Hide NextPage from tab bar
-      />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-    </Tab.Navigator>
-  );
-}
-
-// Main App Navigation
-export default function App() {
+    return unsubscribe; // Unsubscribe when component unmounts
+  }, []);
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {/* Authentication Flow - Start at Home and then navigate to SignIn or SignUp */}
-        <Stack.Screen name="AuthStack" component={AuthStack} />
-        {/* Main Tabs for the rest of the app */}
-        <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen
+          name="Splash"
+          component={SplashScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ headerShown: true }}
+        />
+        <Stack.Screen name="SignUp" component={SignUpScreen} />
+        <Stack.Screen name="SignIn" component={SignInScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
-}
+};
+
+export default App;
