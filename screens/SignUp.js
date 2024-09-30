@@ -12,8 +12,9 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import DropDownPicker from "react-native-dropdown-picker";
 import { auth } from "../config";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import firestore from "firebase/firestore"; // Firestore import
+import { fsDb } from "../config"; // Firestore import
 import AsyncStorage from "@react-native-async-storage/async-storage"; // AsyncStorage for persistence
+import { doc, setDoc } from "firebase/firestore";
 
 export default function SignUpScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -52,17 +53,16 @@ export default function SignUpScreen({ navigation }) {
 
   const saveUserToFirestore = async (userId) => {
     try {
-      await firestore().collection("users").doc(userId).set({
-        name: name,
-        email: email,
-        birthdate: birthdate.toDateString(),
-        country: country,
-        gender: gender,
-        bio: bio,
+      const userRef = doc(fsDb, "users", userId);
+      await setDoc(userRef, {
+        email,
+        name,
+        birthdate,
+        country,
       });
       console.log("User data saved to Firestore.");
     } catch (error) {
-      console.error("Error saving user to Firestore:", error);
+      console.log("Error saving user to Firestore:");
     }
   };
 
@@ -72,12 +72,14 @@ export default function SignUpScreen({ navigation }) {
       await AsyncStorage.setItem("userName", name);
       console.log("User data saved to AsyncStorage.");
     } catch (error) {
-      console.error("Error saving data locally:", error);
+      console.log("Error saving data locally");
     }
   };
 
   const onSignUp = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
 
     await createUserWithEmailAndPassword(auth, email, password)
       .then(async (userCredential) => {
