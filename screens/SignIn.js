@@ -1,10 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
-import { auth } from "../App";
+import { auth } from "../config";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export default function SignInScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    const getUserDataFromStorage = async () => {
+      try {
+        const storedEmail = await AsyncStorage.getItem("userEmail");
+        if (storedEmail) {
+          setUsername(storedEmail); // Pre-fill the email in the login form
+        }
+      } catch (error) {
+        console.error("Error fetching data from storage:", error);
+      }
+    };
+
+    getUserDataFromStorage();
+  }, []);
 
   const validateForm = () => {
     if (!username || !password) {
@@ -33,9 +50,10 @@ export default function SignInScreen({ navigation }) {
       <Text style={styles.title}>Sign In</Text>
       <TextInput
         style={styles.input}
-        placeholder="Username"
+        placeholder="Email"
         value={username}
         onChangeText={setUsername}
+        keyboardType="email-address"
       />
       <TextInput
         style={styles.input}

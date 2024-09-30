@@ -1,18 +1,30 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
-import { auth } from "../App";
+import { auth } from "../config";
 import { signOut } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function HomeScreen({ route, navigation }) {
-  const currentUser = auth.currentUser;
-  const [userEmail, setUserEmail] = useState(currentUser?.email);
+export default function HomeScreen({ navigation }) {
+  const [userEmail, setUserEmail] = useState("");
+  const [userName, setUserName] = useState("");
 
   useEffect(() => {
+    const getUserDataFromStorage = async () => {
+      try {
+        const storedEmail = await AsyncStorage.getItem("userEmail");
+        const storedName = await AsyncStorage.getItem("userName");
+        if (storedEmail) setUserEmail(storedEmail);
+        if (storedName) setUserName(storedName);
+      } catch (error) {
+        console.error("Error fetching data from storage:", error);
+      }
+    };
+
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        setUserEmail(user.email); // Update email when user state changes
+        getUserDataFromStorage();
       } else {
-        navigation.navigate("SignIn"); // Redirect to SignIn if user is not signed in
+        navigation.navigate("SignIn");
       }
     });
     return unsubscribe;
@@ -21,7 +33,7 @@ export default function HomeScreen({ route, navigation }) {
   const onSignOut = async () => {
     await signOut(auth).then(() => {
       console.log("User signed out!");
-      navigation.navigate("SignIn"); // Redirect to SignIn after sign out
+      navigation.navigate("SignIn");
     });
   };
 
@@ -29,7 +41,9 @@ export default function HomeScreen({ route, navigation }) {
     <View style={styles.container}>
       {userEmail !== "" && (
         <>
-          <Text style={styles.title}>Welcome, {userEmail}</Text>
+          <Text style={styles.title}>
+            Welcome, {userName} ({userEmail})
+          </Text>
           <Button title="Logout" onPress={onSignOut} color="#28a745" />
         </>
       )}
