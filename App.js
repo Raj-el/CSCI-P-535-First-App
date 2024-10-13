@@ -4,22 +4,23 @@ import { createStackNavigator } from "@react-navigation/stack";
 import HomeScreen from "./screens/HomeScreen";
 import SignUpScreen from "./screens/SignUp";
 import SignInScreen from "./screens/SignIn";
-import { View } from "react-native";
+import ImagePickerScreen from "./screens/ImagePickerScreen";
+import LocationScreen from "./screens/LocationScreen";
 
-// Create Tab and Stack Navigators
 const Stack = createStackNavigator();
 
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="SignIn">
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{ headerShown: true }}
-        />
-        <Stack.Screen name="SignUp" component={SignUpScreen} />
+      <Stack.Navigator initialRouteName="SignIn" screenOptions={{ headerShown: false }}>
+        {/* Authentication Screens */}
         <Stack.Screen name="SignIn" component={SignInScreen} />
+        <Stack.Screen name="SignUp" component={SignUpScreen} />
+
+        {/* Main App Screens */}
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="ImagePicker" component={ImagePickerScreen} />
+        <Stack.Screen name="Location" component={LocationScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

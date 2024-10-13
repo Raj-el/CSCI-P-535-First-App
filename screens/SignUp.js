@@ -1,116 +1,68 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import DropDownPicker from "react-native-dropdown-picker";
+import React, { useEffect, useState } from "react";
+import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { auth } from "../config";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { fsDb } from "../config"; // Firestore import
-import AsyncStorage from "@react-native-async-storage/async-storage"; // AsyncStorage for persistence
-import { doc, setDoc } from "firebase/firestore";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function SignUpScreen({ navigation }) {
-  const [email, setEmail] = useState("");
+export default function SignInScreen({ navigation }) {
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [birthdate, setBirthdate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // State for DropDownPicker
-  const [country, setCountry] = useState(null);
-  const [openCountry, setOpenCountry] = useState(false); // Add this line
-  const [gender, setGender] = useState(null);
-  const [openGender, setOpenGender] = useState(false); // Add this line
+  useEffect(() => {
+    const getUserDataFromStorage = async () => {
+      try {
+        const storedEmail = await AsyncStorage.getItem("userEmail");
+        if (storedEmail) {
+          setUsername(storedEmail); // Pre-fill the email in the login form
+        }
+      } catch (error) {
+        console.error("Error fetching data from storage:", error);
+      }
+    };
 
-  const [bio, setBio] = useState("");
-
-  const countryOptions = [
-    { label: "United States", value: "us" },
-    { label: "India", value: "in" },
-    { label: "United Kingdom", value: "uk" },
-  ];
-
-  const genderOptions = [
-    { label: "Male", value: "male" },
-    { label: "Female", value: "female" },
-    { label: "Other", value: "other" },
-  ];
+    getUserDataFromStorage();
+  }, []);
 
   const validateForm = () => {
-    if (!email || !password || !name || !country || !gender || !bio) {
-      Alert.alert("Error", "Please fill in all fields.");
+    if (!username || !password) {
+      Alert.alert("Error", "Please fill in both username and password.");
       return false;
     }
     return true;
   };
 
-  const saveUserToFirestore = async (userId) => {
-    try {
-      const userRef = doc(fsDb, "users", userId);
-      await setDoc(userRef, {
-        email,
-        name,
-        birthdate,
-        country,
-      });
-      console.log("User data saved to Firestore.");
-    } catch (error) {
-      console.log("Error saving user to Firestore:");
-    }
-  };
+  const onSignIn = async () => {
+    if (!validateForm()) return;
 
-  const saveUserToAsyncStorage = async () => {
-    try {
-      await AsyncStorage.setItem("userEmail", email);
-      await AsyncStorage.setItem("userName", name);
-      console.log("User data saved to AsyncStorage.");
-    } catch (error) {
-      console.log("Error saving data locally");
-    }
-  };
-
-  const onSignUp = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    await createUserWithEmailAndPassword(auth, email, password)
+    await signInWithEmailAndPassword(auth, username, password)
       .then(async (userCredential) => {
-        const userId = userCredential.user.uid;
+        const user = userCredential.user;
 
-        // Save user data to Firestore
-        await saveUserToFirestore(userId);
+        // Save the email locally
+        await AsyncStorage.setItem("userEmail", username);
 
-        // Save email and name locally using AsyncStorage
-        await saveUserToAsyncStorage();
-
-        // Redirect to Home Screen
-        navigation.navigate("Home");
+        // Redirect to Home (Drawer Navigator)
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Home" }], // Reset the stack to Home
+        });
       })
       .catch((error) => {
         console.error(error);
+        Alert.alert("Error", "Invalid email or password.");
       });
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Sign Up</Text>
-
+    <View style={styles.container}>
+      <Text style={styles.title}>Sign In</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
+        value={username}
+        onChangeText={setUsername}
         keyboardType="email-address"
       />
-
       <TextInput
         style={styles.input}
         placeholder="Password"
@@ -118,72 +70,23 @@ export default function SignUpScreen({ navigation }) {
         onChangeText={setPassword}
         secureTextEntry
       />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
+      <Button title="Sign In" onPress={onSignIn} color="#007bff" />
+      <Button
+        title="Sign Up"
+        onPress={() => {
+          navigation.navigate("SignUp");
+        }}
+        color="#007bff"
       />
-
-      <View>
-        <Button
-          title="Select Birthdate"
-          onPress={() => setShowDatePicker(true)}
-        />
-        {showDatePicker && (
-          <DateTimePicker
-            value={birthdate}
-            mode="date"
-            display="default"
-            onChange={(event, date) => {
-              setShowDatePicker(false);
-              if (date) setBirthdate(date);
-            }}
-          />
-        )}
-        <Text>Selected Date: {birthdate.toDateString()}</Text>
-      </View>
-
-      <DropDownPicker
-        open={openCountry}
-        value={country}
-        items={countryOptions}
-        setOpen={setOpenCountry} // Open or close the dropdown
-        setValue={setCountry} // Set the selected country
-        placeholder="Select Country"
-        containerStyle={styles.dropdown}
-      />
-
-      <DropDownPicker
-        open={openGender}
-        value={gender}
-        items={genderOptions}
-        setOpen={setOpenGender} // Open or close the dropdown
-        setValue={setGender} // Set the selected gender
-        placeholder="Select Gender"
-        containerStyle={styles.dropdown}
-      />
-
-      <TextInput
-        style={[styles.input, { height: 100 }]}
-        placeholder="Biography"
-        value={bio}
-        onChangeText={setBio}
-        multiline
-        numberOfLines={4}
-      />
-
-      <Button title="Sign Up" onPress={onSignUp} color="#28a745" />
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    padding: 20,
+    flex: 1,
     justifyContent: "center",
+    padding: 20,
     backgroundColor: "#f5f5f5",
   },
   title: {
@@ -199,12 +102,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 20,
-    backgroundColor: "#fff",
-  },
-  dropdown: {
-    marginBottom: 20,
-    borderColor: "#ccc",
-    borderRadius: 10,
     backgroundColor: "#fff",
   },
 });
